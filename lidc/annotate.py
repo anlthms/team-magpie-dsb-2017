@@ -7,12 +7,13 @@ import csv
 import dicom
 import glob
 import os
+import sys
 import SimpleITK as sitk
 
 warnings.filterwarnings("ignore")
 from joblib import Parallel, delayed
 
-dicom_root_path = '/mnt/storage/forShai/LIDC/'
+LIDC_ROOT = '/mnt/storage/forShai/LIDC/'
 PROCESSED_DIR = '/home/ronens1/lidc/processed/'
 min_agreement = 3
 
@@ -41,8 +42,8 @@ def get_annotations(scan):
 def transform_centroid(row):
     uid = str(row[0])
     centroid = row[1:4]
-    files = glob.glob(dicom_root_path + '*/*/' + uid + '/*.dcm')
-    slices = [dicom.read_file(s) for s in files] 
+    files = glob.glob(LIDC_ROOT + '*/*/' + uid + '/*.dcm')
+    slices = [dicom.read_file(s) for s in files]
     positions = np.unique([int(x.ImagePositionPatient[2]) for x in slices])
     slice_thickness = np.abs(positions[1] - positions[0])
     z0 = positions[0]
@@ -53,6 +54,11 @@ def transform_centroid(row):
     return centroid
 
 if __name__ == "__main__":
+    print('Usage: %s LIDC_ROOT/ PROCESSED_DIR/' % sys.argv[0])
+    if len(sys.argv) == 3:
+        LIDC_ROOT = sys.argv[1]
+        PROCESSED_DIR = sys.argv[2]
+    CSV_DIR = os.path.dirname(PROCESSED_DIR[:-1])+'/csv/'
     qu = pl.query(pl.Scan)
     rows = []
     features_dict = ['subtlety','internalStructure','calcification','sphericity',
@@ -65,10 +71,10 @@ if __name__ == "__main__":
             row = [annotation['uid']]+annotation['centroid'].tolist()+annotation['diameter'].tolist()+annotation['features'].tolist()
             rows.append(row)
     df = pd.DataFrame(uids)
-    df.to_csv('/home/ronens1/lidc/csv/list.csv',index=False,header=False)
-    transformed_centroids  = Parallel(n_jobs=12,verbose=1)(delayed(transform_centroid)(row[0:4]) for row in rows) 
+    df.to_csv(CSV_DIR + 'list.csv',index=False,header=False)
+    transformed_centroids  = Parallel(n_jobs=12,verbose=1)(delayed(transform_centroid)(row[0:4]) for row in rows)
     for i,row in enumerate(rows):
         row[1:4] = transformed_centroids[i]
     df = pd.DataFrame(rows)
-    df.to_csv('/home/ronens1/lidc/csv/annotations.csv',index=False,header=False)
+    df.to_csv(CSV_DIR + 'annotations.csv',index=False,header=False)
 

@@ -17,8 +17,9 @@ sys.path.append('/home/ronens1/DSB3/src')
 import preprocess1 as pre
 
 LIDC_ROOT = '/mnt/storage/forShai/LIDC/'
+PROCESSED_DIR = '/home/ronens1/lidc/processed/'
 
-NEW_SPACING = pre.NEW_SPACING 
+NEW_SPACING = pre.NEW_SPACING
 
 
 
@@ -45,10 +46,10 @@ def draw_circles(image,cands,spacing):
 
         xx,yy,zz = np.meshgrid(x,y,z)
         nodule = (xx/radius_voxel[0])**2 + (yy/radius_voxel[1])**2 + (zz/radius_voxel[2])**2 <= 1
-        image_mask[corner1[0]:corner2[0], 
+        image_mask[corner1[0]:corner2[0],
                 corner1[1]:corner2[1],
                 corner1[2]:corner2[2]] = nodule.astype(int)
-        
+
     return image_mask,voxel_cands
 
 
@@ -84,15 +85,14 @@ def crop_it(image,label,voxel_cads):
     return image1,label1,voxel_cads
 
 
-    
+
 
 def create_slices(imagePath,cads):
-    PROCESSED_DIR = '/home/ronens1/lidc/processed/'
     img,spacing,direction = pre.process_image(imagePath,info=True)
     #pre.plot_image(img)
     imageName = os.path.split(imagePath)[-1]
     image_cads = cads[cads.iloc[:,0] == imageName]
-    
+
     nodule_mask,voxel_cads = draw_circles(img,image_cads,NEW_SPACING)
 
     DEBUG = False
@@ -112,7 +112,7 @@ def create_slices(imagePath,cads):
             if b >= big:
                 ind2 = k
                 big = b
-        big = 0        
+        big = 0
         for k in range(nodule_mask.shape[2]):
             b = np.sum(nodule_mask[:,:,k])
             if b >= big:
@@ -129,7 +129,7 @@ def create_slices(imagePath,cads):
         plt.imshow(np.squeeze(img[(ind1-20):(ind1+20),ind2,(ind3-20):(ind3+20)]),cmap=plt.cm.gray)
         plt.subplot(212)
         plt.imshow(np.squeeze(nodule_mask[(ind1-20):(ind1+20),ind2,(ind3-20):(ind3+20)]),cmap=plt.cm.gray)
-        
+
         plt.figure(3)
         plt.subplot(211)
         plt.imshow(np.squeeze(img[(ind1-20):(ind1+20),(ind2-20):(ind2+20),ind3]),cmap=plt.cm.gray)
@@ -149,7 +149,13 @@ def create_slices(imagePath,cads):
     np.save(PROCESSED_DIR+imageName+'.npy',img)
     np.save(PROCESSED_DIR+imageName+'_nodules.npy',nodule_mask)
 if __name__ == "__main__":
-    uids = pd.read_csv("/home/ronens1/lidc/csv/list.csv")
+    print('Usage: %s LIDC_ROOT/ PROCESSED_DIR/' % sys.argv[0])
+    if len(sys.argv) == 3:
+        LIDC_ROOT = sys.argv[1]
+        PROCESSED_DIR = sys.argv[2]
+    CSV_DIR = os.path.dirname(PROCESSED_DIR[:-1])+'/csv/'
+
+    uids = pd.read_csv(CSV_DIR + "list.csv")
     names  = uids.ix[:,0].values.tolist()
     paths = []
     #names=['1.3.6.1.4.1.14519.5.2.1.6279.6001.199220738144407033276946096708']
@@ -160,9 +166,9 @@ if __name__ == "__main__":
     #        '1.3.6.1.4.1.14519.5.2.1.6279.6001.208737629504245244513001631764',
     #        '1.3.6.1.4.1.14519.5.2.1.6279.6001.178391668569567816549737454720',
     #        '1.3.6.1.4.1.14519.5.2.1.6279.6001.503980049263254396021509831276']
-  
+
     for name in names:
         paths.append(glob.glob(LIDC_ROOT+'*/*/'+name)[0])
     #print imagePaths
-    cads = pd.read_csv("/home/ronens1/lidc/csv/annotations.csv")
+    cads = pd.read_csv(CSV_DIR + "annoations.csv")
     Parallel(n_jobs=-1,verbose=1)(delayed(create_slices)(imagePath, cads) for imagePath in paths)
