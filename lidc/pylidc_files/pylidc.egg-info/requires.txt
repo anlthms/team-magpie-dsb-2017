@@ -1,0 +1,6 @@
+sqlalchemy
+numpy
+scipy
+matplotlib
+pydicom
+scikit-image

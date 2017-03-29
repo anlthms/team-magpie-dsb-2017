@@ -1,0 +1,12 @@
+setup.py
+pylidc/Annotation.py
+pylidc/Contour.py
+pylidc/Scan.py
+pylidc/_Base.py
+pylidc/__init__.py
+pylidc/pylidc.sqlite
+pylidc.egg-info/PKG-INFO
+pylidc.egg-info/SOURCES.txt
+pylidc.egg-info/dependency_links.txt
+pylidc.egg-info/requires.txt
+pylidc.egg-info/top_level.txt
