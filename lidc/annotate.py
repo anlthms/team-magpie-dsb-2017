@@ -19,7 +19,10 @@ min_agreement = 3
 
 def get_annotations(scan):
     uid = scan.series_instance_uid
-    clusters = scan.annotations_with_matching_overlap(tol=0.8)
+    if hasattr(scan, 'cluster_annotations'):
+        clusters = scan.cluster_annotations()
+    else:
+        clusters = scan.annotations_with_matching_overlap(tol=0.8)
     clusters_data=[]
     for cluster in clusters:
         if len(cluster)<min_agreement:
@@ -59,6 +62,8 @@ if __name__ == "__main__":
         LIDC_ROOT = sys.argv[1]
         PROCESSED_DIR = sys.argv[2]
     CSV_DIR = os.path.dirname(PROCESSED_DIR[:-1])+'/csv/'
+    if not os.path.exists(CSV_DIR):
+        os.makedirs(CSV_DIR)
     qu = pl.query(pl.Scan)
     rows = []
     features_dict = ['subtlety','internalStructure','calcification','sphericity',
