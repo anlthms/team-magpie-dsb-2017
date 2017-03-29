@@ -170,5 +170,5 @@ if __name__ == "__main__":
     for name in names:
         paths.append(glob.glob(LIDC_ROOT+'*/*/'+name)[0])
     #print imagePaths
-    cads = pd.read_csv(CSV_DIR + "annoations.csv")
+    cads = pd.read_csv(CSV_DIR + "annotations.csv")
     Parallel(n_jobs=-1,verbose=1)(delayed(create_slices)(imagePath, cads) for imagePath in paths)
