@@ -5,6 +5,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import SGD
 import preprocess1 as pre
 import numpy as np
+import sys
+import os
 import resnet3
 import keras.backend as K
 import tensorflow as tf
@@ -102,9 +104,15 @@ def get_activations(model, X_batch):
     return features
 
 REFINED = True
-
 #DataSet =  'LIDC'
 DataSet = 'DSB'
+print('Usage: %s DataSet <REFINED 1/0> SEG_ROOT/' % sys.argv[0])
+if len(sys.argv) == 4:
+    DataSet = sys.argv[1]
+    REFINED = (sys.argv[2] == '1')
+    pre.SEG_ROOT = sys.argv[3]
+print('DataSet %s REFINED %s' % (DataSet, REFINED))
+
 Mode = 'test'
 
 config = tf.ConfigProto()
@@ -125,6 +133,9 @@ else:
     data,labels = pre.load_lidc()
     save_dir = pre.DETECTIONS_LIDC_ROOT
     nmax = 10
+
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
 
 print "predicting..."
 #data = data[:4]

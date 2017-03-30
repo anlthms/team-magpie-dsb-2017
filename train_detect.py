@@ -8,6 +8,7 @@ from keras.optimizers import SGD,Adam
 from keras import initializations
 from keras.regularizers import l2
 import preprocess1 as pre
+import os
 import numpy as np
 import resnet3
 import keras.backend as K
@@ -110,8 +111,11 @@ def get_model4():
     return model
 
 
-
-
+print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
+if len(sys.argv) == 4:
+    pre.ORIGINAL_IMAGES_ROOT = sys.argv[1]
+    pre.PROCESSED_IMAGES_ROOT = sys.argv[2]
+    pre.LABELS_FILE = sys.argv[3]
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth=True
@@ -122,6 +126,8 @@ model = get_model4()
 model.compile(optimizer=Adam(lr=0.001),loss='binary_crossentropy',metrics=['accuracy'])
 
 
+if not os.path.exists('logs'):
+    os.mkdir('logs')
 BEST_WEIGHTS_PATH = 'logs/detect_best_weights.hdf5'
 TRAIN = True
 if TRAIN:

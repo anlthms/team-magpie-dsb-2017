@@ -11,6 +11,8 @@ from keras.regularizers import l2
 from deconv3D import Deconvolution3D
 import preprocess1 as preprocess
 import numpy as np
+import sys
+import os
 import resnet3
 import keras.backend as K
 import tensorflow as tf
@@ -88,7 +90,15 @@ def get_model(input_shape=preprocess.SEG_CROP+[1]):
     return model
 
 def main():
- 
+    REFINE = True
+    print('Usage: %s <REFINE 1/0> PROCESSED_DIR/' % sys.argv[0])
+    if len(sys.argv) == 3:
+        REFINE = (sys.argv[1] == '1')
+        preprocess.SEG_ROOT = sys.argv[2]
+        if not os.path.exists('models'):
+            os.mkdir('models')
+    print('REFINE %s' % REFINE)
+
     config = tf.ConfigProto()
     config.gpu_options.allow_growth=True
     session = tf.Session(config=config)
@@ -100,7 +110,6 @@ def main():
     else:
         model = get_model()   
 
-    REFINE= True
     print "loading data..."
     data,labels = preprocess.load_lidc()
     N_VAL = 100

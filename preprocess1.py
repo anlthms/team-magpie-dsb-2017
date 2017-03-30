@@ -151,6 +151,7 @@ def seg_downsample(image,mode='simple'):
 
 
 def load_lidc():
+    print('lading from', SEG_ROOT)
     filenames = glob.glob(SEG_ROOT+'*')
     data = []
     labels = []
@@ -715,6 +716,13 @@ def load_numpy_detections(dataset='train'):
     return data,cancer_labels
 
 if __name__ == "__main__":
+    print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
+    if len(sys.argv) == 4:
+        ORIGINAL_IMAGES_ROOT = sys.argv[1]
+        PROCESSED_IMAGES_ROOT = sys.argv[2]
+        LABELS_FILE = sys.argv[3]
+        if not os.path.exists(PROCESSED_IMAGES_ROOT):
+            os.makedirs(PROCESSED_IMAGES_ROOT)
 
     patients=os.listdir(ORIGINAL_IMAGES_ROOT)
     patients.sort()
