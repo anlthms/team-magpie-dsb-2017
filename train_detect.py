@@ -9,11 +9,12 @@ from keras import initializations
 from keras.regularizers import l2
 import preprocess1 as pre
 import os
+import sys
 import numpy as np
 import resnet3
 import keras.backend as K
 import tensorflow as tf
-import seg1
+#import seg1
 import densenet3
 import pandas as pd
 import random

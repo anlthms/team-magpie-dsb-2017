@@ -21,14 +21,15 @@ fi
 python seg_lidc.py 0 ../data/processed/
 
 # detect on LIDC
-python detect.py LIDC 0 ../data/processed/
+python detect.py LIDC 0 ../data/processed/ dummy dummy dummy dummy
 
 # refine on LIDC. 1 is for REFINE
 python seg_lidc.py 1 ../data/processed/
 
 # detect on DSB
-python detect.py DSB 1 $DATA_ROOT/dsb/processed/
+python detect.py DSB 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv train
+python detect.py DSB 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv test
 
 # train/validate/test on DSB
-python train_detect.py $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv
+PYTHONPATH=. python train_detect.py $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv
 

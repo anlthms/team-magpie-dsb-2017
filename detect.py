@@ -106,14 +106,19 @@ def get_activations(model, X_batch):
 REFINED = True
 #DataSet =  'LIDC'
 DataSet = 'DSB'
-print('Usage: %s DataSet <REFINED 1/0> SEG_ROOT/' % sys.argv[0])
-if len(sys.argv) == 4:
+Mode = 'test'
+print('Usage: %s DataSet <REFINED 1/0> SEG_ROOT/ ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE Mode' % sys.argv[0])
+if len(sys.argv) == 8:
     DataSet = sys.argv[1]
     REFINED = (sys.argv[2] == '1')
     pre.SEG_ROOT = sys.argv[3]
+    pre.ORIGINAL_IMAGES_ROOT = sys.argv[4]
+    pre.PROCESSED_IMAGES_ROOT = sys.argv[5]
+    pre.LABELS_FILE = sys.argv[6]
+    Mode = sys.argv[7]
+
 print('DataSet %s REFINED %s' % (DataSet, REFINED))
 
-Mode = 'test'
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth=True

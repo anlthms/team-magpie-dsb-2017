@@ -185,7 +185,7 @@ def main():
         detected = np.max(detect[i,...])
         shape = data_v[i].shape
         print "nodule pixels:",pix_sum,detected,shape, np.max(predict[i,...])
-        PLOT = True
+        PLOT = False
         thresh = 0.15
         if PLOT and ((pix_sum>0.0 and detected<thresh) or (pix_sum == 0.0 and detected>thresh)) :
             big = 0
