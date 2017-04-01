@@ -113,6 +113,12 @@ def main():
     print "loading data..."
     data,labels = preprocess.load_lidc()
     N_VAL = 100
+    if os.path.exists('quick-mode'):
+        quick_mode = True
+        N_VAL = len(data) // 2
+    else:
+        quick_mode = False
+
     data_t = data[:-N_VAL]
     labels_t = labels[:-N_VAL]
     data_v = data[-N_VAL:]
@@ -137,6 +143,9 @@ def main():
     else:
         save_best = ModelCheckpoint(BEST_WEIGHTS_PATH,save_best_only=True)
         nb_epoch = 50
+
+    if quick_mode:
+        nb_epoch = 5
 
     BATCH_SIZE = 32
     train_generator= preprocess.generate_lidc_batch(data_t,labels_t,detections=detections_t,batch_size=BATCH_SIZE)
@@ -164,6 +173,9 @@ def main():
         model.load_weights(REFINE_MODEL,by_name=True)
     else:
         model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
+
+    if quick_mode:
+        return
 
     test_generator= preprocess.generate_lidc_batch(data_v,labels_v,detections=detections_v,batch_size=1)
 

@@ -151,8 +151,13 @@ def seg_downsample(image,mode='simple'):
 
 
 def load_lidc():
-    print('lading from', SEG_ROOT)
+    print('loading from', SEG_ROOT)
     filenames = glob.glob(SEG_ROOT+'*')
+    if os.path.exists('quick-mode'):
+        np.random.shuffle(filenames)
+        filenames = filenames[:int(len(filenames) * 0.1)]
+        print('Quick mode - reading %d files' % (len(filenames)))
+
     data = []
     labels = []
     positions = []
