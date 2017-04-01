@@ -12,6 +12,7 @@ from tqdm import tqdm
 import threading
 import sys
 from skimage import measure,morphology
+from scipy import ndimage
 
 ORIGINAL_IMAGES_ROOT='../data/stage1/'
 PROCESSED_IMAGES_ROOT ='../data/processed/'
@@ -32,7 +33,9 @@ SEG_CROP = [48,48,48]
 MAX_PIXEL = 65535
     
 #det_crop = (31,30,27)
-det_crop = (5,5,4)
+mgn = 2
+#det_crop = (5,5,4)
+det_crop = (5+2*mgn,5+2*mgn,5+2*mgn)
 random.seed(2)
 
 
@@ -109,6 +112,54 @@ def  augment1(patch):
     patch = np.transpose(patch,perm)
     return patch
 
+def get_frame(patch):
+    shape = patch.shape
+    new_shape = det_crop + (shape[-1],)
+    frame = np.zeros(new_shape, dtype=patch.dtype)
+    return frame
+
+def copy_to_frame(frame, patch):
+    shape = patch.shape
+    frame[mgn:shape[0]+mgn, mgn:shape[1]+mgn, mgn:shape[2]+mgn] = patch
+    return frame
+
+def augment2(frame, patch, epoch):
+    shape = patch.shape
+
+    if (epoch > 20 and np.random.randint(epoch - 20) != 0) or epoch > 50:
+        # Taper off augmentation
+        starts = [mgn, mgn, mgn]
+        return copy_to_frame(frame, patch)
+
+    # Flip and transpose
+    if random.random() < 0.5:
+        patch = patch[::-1]
+    if random.random() < 0.5:
+        patch = patch[:,::-1]
+    if random.random() < 0.5:
+        patch = patch[:,:,::-1]
+    perm = [0,1,2]
+    random.shuffle(perm)
+    perm = perm + [3]
+    patch = np.transpose(patch,perm)
+
+    # Get a random zoom ratio
+    ratios = [(2.0 * mgn * np.random.rand()) / frame.shape[0] for _ in range(3)]
+    # Zoom out 50% of the time
+    ratios = [ratios[i] * -1 if np.random.randint(2) == 0 else ratios[i] for i in range(3)]
+    spacing = [1+ratios[0], 1+ratios[1], 1+ratios[2], 1.0]
+    patch = ndimage.interpolation.zoom(patch, spacing, mode='nearest')
+    # Jiggle
+    margins = np.array(frame.shape) - np.array(patch.shape)
+    starts = [np.random.randint(margins[i]) for i in range(3)]
+    frame[starts[0]:patch.shape[0]+starts[0], starts[1]:patch.shape[1]+starts[1], starts[2]:patch.shape[2]+starts[2]] = patch
+    return frame
+
+def expand(data):
+    result = np.zeros(((data.shape[0],) + det_crop + (data.shape[-1],)), dtype=data.dtype)
+    for idx in range(data.shape[0]):
+        copy_to_frame(result[idx], data[idx])
+    return result
 
 def augment(patch,label):
     if random.random() < 0.5:
@@ -633,7 +684,9 @@ def process_image(path,info=False):
 
 @threadsafe_generator
 def generate_detect(data,labels,rand):
+    epoch = 0
     while True:
+        epoch += 1
         order = range(len(data))
         if rand:
             random.shuffle(order)
@@ -653,9 +706,12 @@ def generate_detect(data,labels,rand):
             image_crop = np.squeeze(image)
             #print image.shape
             #image_crop = seg_crop(image,(x,y,z),det_crop)
+            frame = get_frame(image_crop)
             if rand:
                 #pass
-                image_crop = augment1(image_crop)
+                image_crop = augment2(frame, image_crop, epoch)
+            else:
+                image_crop = copy_to_frame(frame, image_crop)
             #print image_crop.shape,image_crop.dtype,np.mean(image_crop)
             #if rand:
                 #for k in range(image.shape[3]):

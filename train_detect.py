@@ -111,6 +111,10 @@ def get_model4():
     model.summary()
     return model
 
+def log_loss(t, y):
+    eps = 1e-6
+    y = np.clip(y, eps, 1-eps)
+    return -np.mean(t*np.log(y) + (1 - t)*np.log(1 - y))
 
 print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
 if len(sys.argv) == 4:
@@ -142,6 +146,7 @@ if TRAIN:
     labels_train = labels[:-split]
     data_v = data[-split:]
     labels_v = labels[-split:]
+    print('val labels mean %.4f' % labels_v.mean())
     print "loading done"
 
 
@@ -155,7 +160,13 @@ if TRAIN:
 
     print "training labels",len(labels_train)
 
-    model.fit_generator(generator=train_gen,samples_per_epoch=len(labels_train),nb_epoch=50, validation_data=val_gen,nb_val_samples=split,callbacks=[save_best],nb_worker=1,verbose=1)
+    model.fit_generator(generator=train_gen,samples_per_epoch=len(labels_train),nb_epoch=80, validation_data=val_gen,nb_val_samples=split,callbacks=[save_best],nb_worker=1,verbose=1)
+
+    model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
+    val_predictions = model.predict(pre.expand(data_v), batch_size=1)[:, 0]
+
+    val_loss = log_loss(labels_v, val_predictions)
+    print('val preds mean %.4f loss %.4f' % (val_predictions.mean(), val_loss))
 
 
 # SUBMIT
@@ -165,8 +176,8 @@ model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
 data_test,ids = pre.load_numpy_detections(dataset='test')
 print "predicting..."
 
-predictions = model.predict(data_test,batch_size=1,verbose=1)
-
+predictions = model.predict(pre.expand(data_test),batch_size=1,verbose=1)
+print('test preds mean %.4f' % predictions.mean())
 df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(np.squeeze(predictions))})
 df.to_csv('predictions.csv',header=True,columns=['id','cancer'],index=False)
 
