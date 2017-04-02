@@ -18,6 +18,7 @@ import tensorflow as tf
 import densenet3
 import pandas as pd
 import random
+from sklearn.ensemble import GradientBoostingClassifier
 
 def my_init(shape, name=None,dim_ordering='tf'):
         return initializations.normal(shape, scale=0.001, name=name)
@@ -111,6 +112,15 @@ def get_model4():
     model.summary()
     return model
 
+def log_loss(t, y):
+    print('pos mean', y[t == 1].mean(), 'neg mean', y[t == 0].mean())
+    print('pos max', y[t == 1].max(), 'neg max', y[t == 0].max())
+    print('raw logloss', -np.mean(t*np.log(y) + (1 - t)*np.log(1 - y)))
+    pos_ratio = 1.0 * t.sum()  / t.shape[0]
+    y += pos_ratio - y.mean()
+    eps = 1e-6
+    y = np.clip(y, eps, 1-eps)
+    return -np.mean(t*np.log(y) + (1 - t)*np.log(1 - y))
 
 print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
 if len(sys.argv) == 4:
@@ -143,6 +153,18 @@ if TRAIN:
     data_v = data[-split:]
     labels_v = labels[-split:]
     print "loading done"
+##
+    rng = np.random.RandomState(0)
+    model = GradientBoostingClassifier(n_estimators=1000, max_depth=1,
+                                       random_state=rng, verbose=1)
+    data_train = data_train.reshape(data_train.shape[0], -1)
+    data_v = data_v.reshape(data_v.shape[0], -1)
+    model.fit(data_train, labels_train)
+    val_preds = model.predict_proba(data_v)[:, 1]
+    print('logloss %.4f' % log_loss(labels_v, val_preds))
+    quit()
+
+##
 
 
     save_best = ModelCheckpoint(BEST_WEIGHTS_PATH,save_best_only=True)
