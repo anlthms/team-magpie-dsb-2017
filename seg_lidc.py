@@ -4,7 +4,7 @@ from keras.models import Model
 from keras.layers import Input, Dense, Convolution3D,Flatten, BatchNormalization, Dropout, Merge,merge,Activation
 from keras.layers import AveragePooling3D, MaxPooling3D, Cropping3D,GlobalMaxPooling3D
 from keras.callbacks import ModelCheckpoint
-from keras.objectives import binary_crossentropy
+from keras.objectives import binary_crossentropy, mse
 from keras.metrics import binary_accuracy
 from keras.optimizers import Adam,RMSprop
 from keras.regularizers import l2
@@ -26,7 +26,8 @@ REFINE_MODEL = 'models/refine_lidc.hdf5'
 DETECTIONS_PATH = preprocess.DETECTIONS_LIDC_ROOT+'detections.npy'
 
 #cost = resnet3.dice_coef_loss
-cost = binary_crossentropy
+#cost = binary_crossentropy
+cost = mse
 def conv_batch(prev,channels,kernel=3,stride=1,activation='relu',drop=0.0,name=None):
     conv = Convolution3D(channels,kernel,kernel,kernel,subsample=(stride,stride,stride),init='he_normal',
             W_regularizer=l2(0.00001),border_mode='same')(prev)
@@ -142,7 +143,7 @@ def main():
         nb_epoch = 15
     else:
         save_best = ModelCheckpoint(BEST_WEIGHTS_PATH,save_best_only=True)
-        nb_epoch = 50
+        nb_epoch = 60
 
     if quick_mode:
         nb_epoch = 5

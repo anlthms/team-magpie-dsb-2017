@@ -324,7 +324,9 @@ def generate_lidc(data,labels,neg_fraction=0.5,out=3):
     total = 1.
     neg = 0.
     PLOT = False
+    epoch = 0
     while True:
+        epoch += 1
         for i,image in enumerate(data):
             label = labels[i]
 
@@ -361,6 +363,9 @@ def generate_lidc(data,labels,neg_fraction=0.5,out=3):
             image_crop = np.expand_dims(image_crop,axis=3)
             label_crop = np.expand_dims(label_crop,axis=3)
 
+            if epoch < 20:
+                label_crop[label_crop == 0] = 1.0/(epoch**2)
+                label_crop *= image_crop
             if out>1:
                 label_s = seg_downsample(label_crop,mode='maxpool')
 
