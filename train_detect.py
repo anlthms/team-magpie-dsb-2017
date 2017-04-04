@@ -116,9 +116,10 @@ def log_loss(t, y):
     y = np.clip(y, eps, 1-eps)
     return -np.mean(t*np.log(y) + (1 - t)*np.log(1 - y))
 
-def calibrate(pred):
+def calibrate(pred, scale=1.0):
+    pred = pred.copy()
     pred -= pred.mean()
-    pred *= 1.4
+    pred *= scale
     pred += 0.25
     eps = 1e-3
     pred = np.clip(pred, eps, 1 - eps)
@@ -147,14 +148,7 @@ TRAIN = True
 if TRAIN:
     print "loading train data..."
    
-    data,labels = pre.load_numpy_detections()
-    split=len(labels)/10
-    #split = 1
-    print 'validation size',split
-    data_train = data[:-split]
-    labels_train = labels[:-split]
-    data_v = data[-split:]
-    labels_v = labels[-split:]
+    data_train, data_v, labels_train, labels_v = pre.load_numpy_detections()
     print "loading done"
 
 
@@ -168,12 +162,12 @@ if TRAIN:
 
     print "training labels",len(labels_train)
 
-    model.fit_generator(generator=train_gen,samples_per_epoch=len(labels_train),nb_epoch=50, validation_data=val_gen,nb_val_samples=split,callbacks=[save_best],nb_worker=1,verbose=1)
+    model.fit_generator(generator=train_gen,samples_per_epoch=len(labels_train),nb_epoch=50, validation_data=val_gen,nb_val_samples=len(labels_v),callbacks=[save_best],nb_worker=1,verbose=1)
 
 
 # SUBMIT
 model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
-if False:
+if True:
     val_predictions = model.predict(data_v, batch_size=1)
 
     val_loss = log_loss(labels_v, np.squeeze(val_predictions))
@@ -186,8 +180,9 @@ print "predicting..."
 
 predictions = model.predict(data_test,batch_size=1,verbose=1)
 
-df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(calibrate(np.squeeze(predictions)))})
+df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(np.squeeze(predictions))})
 df.to_csv('predictions.csv',header=True,columns=['id','cancer'],index=False)
 
-
+df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(calibrate(np.squeeze(predictions)))})
+df.to_csv('calibrated_predictions.csv',header=True,columns=['id','cancer'],index=False)
 

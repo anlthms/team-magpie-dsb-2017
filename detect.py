@@ -133,6 +133,12 @@ if DataSet == 'DSB':
     print len(data)
     save_dir = pre.DETECTIONS_DSB_ROOT+Mode+'/'
     nmax = 5
+elif DataSet == 'DSBAUG1':
+    print "DSBAUG1"
+    data,labels,names = pre.load_numpy_images(dataset=Mode, aug=1)
+    print len(data)
+    save_dir = pre.DETECTIONS_DSB_AUG1_ROOT+Mode+'/'
+    nmax = 5
 else:
     print "LIDC"
     data,labels = pre.load_lidc()

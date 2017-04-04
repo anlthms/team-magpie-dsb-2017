@@ -30,6 +30,7 @@ python seg_lidc.py 1 ../data/processed/
 
 # detect on DSB
 python detect.py DSB 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv train
+python detect.py DSBAUG1 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv train
 python detect.py DSB 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv test
 
 # train/validate/test on DSB

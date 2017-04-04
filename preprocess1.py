@@ -16,6 +16,7 @@ from skimage import measure,morphology
 ORIGINAL_IMAGES_ROOT='../data/stage1/'
 PROCESSED_IMAGES_ROOT ='../data/processed/'
 DETECTIONS_DSB_ROOT = '../data/detections_dsb/'
+DETECTIONS_DSB_AUG1_ROOT = '../data/detections_dsb_aug1/'
 DETECTIONS_LIDC_ROOT = '../data/detections_lidc/'
 LABELS_FILE = '../data/stage1_labels.csv'
 SEG_ROOT = '/home/ronens1/lidc/processed/'
@@ -487,7 +488,7 @@ def generate_dsb_batch(data,labels,rand,batch_size=1):
         result = ({'inputs':inputs},{'output':targets})
         yield result
 
-def load_numpy_images(dataset='train'):
+def load_numpy_images(dataset='train', aug=0):
     labels = pd.read_csv(LABELS_FILE) 
     names = []
     if dataset == 'train':
@@ -497,6 +498,8 @@ def load_numpy_images(dataset='train'):
             label = row['cancer']
             image = np.load(PROCESSED_IMAGES_ROOT+patient+'.npy')
             image = crop_box(image)
+            if aug == 1:
+                image = image[::-1]
             data.append(image.astype(np.uint16))
 	    names.append(patient)
         cancer_labels = np.squeeze(labels.as_matrix(columns=['cancer']))
@@ -691,37 +694,55 @@ def generate_detect_batch(data,labels,rand,batch_size=1):
 
 def load_numpy_detections(dataset='train'):
     labels = pd.read_csv(LABELS_FILE)
+    naugs = 2
     if dataset == 'train':
-        data = np.zeros((1400,5,5,4,151),dtype=np.float32)
-        
-        for index,row in tqdm(labels.iterrows()):
+        # Shuffle the labels
+        labels = labels.sample(frac=1, random_state=0).reset_index(drop=True)
+        split=len(labels)/10
+        print 'validation size',split
+        train_labels = labels.iloc[:-split].reset_index(drop=True)
+        val_labels = labels.iloc[-split:].reset_index(drop=True)
+        # Make train and validation sets and concatenate them together so that the last 10% is for validation
+        train_data = np.zeros((naugs*train_labels.shape[0],5,5,4,151),dtype=np.float32)
+        for index,row in train_labels.iterrows():
             patient = row['id']
-            label = row['cancer']
+            train_data[naugs*index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+            if naugs > 1:
+                train_data[naugs*index + 1] = np.load(DETECTIONS_DSB_AUG1_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+
+        val_data = np.zeros((naugs*val_labels.shape[0],5,5,4,151),dtype=np.float32)
+        for index,row in val_labels.iterrows():
+            patient = row['id']
+            val_data[naugs*index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+            if naugs > 1:
+                # Just repeat the sample (don't use augmented sample for validation).
+                val_data[naugs*index + 1] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+
+        np_train_labels = np.squeeze(train_labels.as_matrix(columns=['cancer']))
+        np_train_labels = np.repeat(np_train_labels, naugs)
+        np_val_labels = np.squeeze(val_labels.as_matrix(columns=['cancer']))
+        np_val_labels = np.repeat(np_val_labels, naugs)
+
+        # Shuffle the training subset
+        inds = np.arange(train_data.shape[0])
+        np.random.seed(0)
+        np.random.shuffle(inds)
+        train_data = train_data[inds]
+        np_train_labels = np_train_labels[inds]
+        return train_data, val_data, np_train_labels, np_val_labels
+    # test
+    data = []
+    ids = [] # fill with ids for test data
+    patients=os.listdir(ORIGINAL_IMAGES_ROOT)
+    for patient in patients:
+        if patient not in labels.id.values:
             detection = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy')
+            #detection = np.transpose(np.squeeze(detection),(1,2,3,0))
             detection = detection.astype(np.float32)
-            data[index,:,:,:,:]=detection
-        cancer_labels = np.squeeze(labels.as_matrix(columns=['cancer']))
-        data = data[:(index+1),...]
-
-        combined =  list(zip(data.tolist(),cancer_labels.tolist()))
-        random.shuffle(combined)
-        data[...],cancer_labels[...]=zip(*combined)
-        data = np.array(data)
-        lables = np.array(labels)
-
-    else:
-        data = []
-        ids = [] # fill with ids for test data
-        patients=os.listdir(ORIGINAL_IMAGES_ROOT)
-        for patient in patients:
-            if patient not in labels.id.values:
-                detection = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy')
-                #detection = np.transpose(np.squeeze(detection),(1,2,3,0))
-                detection = detection.astype(np.float32)
-                data.append(detection)
-                ids.append(patient)
-        cancer_labels = ids 
-        data = np.asarray(data)
+            data.append(detection)
+            ids.append(patient)
+    cancer_labels = ids
+    data = np.asarray(data)
      
     return data,cancer_labels
 
