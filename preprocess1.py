@@ -696,7 +696,7 @@ def generate_detect_batch(data,labels,rand,batch_size=1):
 
 def load_numpy_detections(dataset='train'):
     labels = pd.read_csv(LABELS_FILE)
-    naugs = 2
+    naugs = 1
     if dataset == 'train':
         # Shuffle the labels
         labels = labels.sample(frac=1, random_state=0).reset_index(drop=True)
