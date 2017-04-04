@@ -497,9 +497,11 @@ def load_numpy_images(dataset='train', aug=0):
             patient = row['id']
             label = row['cancer']
             image = np.load(PROCESSED_IMAGES_ROOT+patient+'.npy')
-            image = crop_box(image)
             if aug == 1:
-                image = image[::-1]
+                # Up to 2.5% change in each dimension.
+                resize =  [1 + 0.05 * (np.random.random() - 0.5) for _ in range(3)]
+                image = scipy.ndimage.interpolation.zoom(image, resize)
+            image = crop_box(image)
             data.append(image.astype(np.uint16))
 	    names.append(patient)
         cancer_labels = np.squeeze(labels.as_matrix(columns=['cancer']))
