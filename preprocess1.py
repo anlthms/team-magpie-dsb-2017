@@ -497,9 +497,11 @@ def load_numpy_images(dataset='train', aug=0):
             patient = row['id']
             label = row['cancer']
             image = np.load(PROCESSED_IMAGES_ROOT+patient+'.npy')
-            image = crop_box(image)
             if aug == 1:
-                image = image[::-1]
+                # Up to 2.5% change in each dimension.
+                resize =  [1 + 0.05 * (np.random.random() - 0.5) for _ in range(3)]
+                image = scipy.ndimage.interpolation.zoom(image, resize)
+            image = crop_box(image)
             data.append(image.astype(np.uint16))
 	    names.append(patient)
         cancer_labels = np.squeeze(labels.as_matrix(columns=['cancer']))
@@ -710,18 +712,14 @@ def load_numpy_detections(dataset='train'):
             if naugs > 1:
                 train_data[naugs*index + 1] = np.load(DETECTIONS_DSB_AUG1_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
 
-        val_data = np.zeros((naugs*val_labels.shape[0],5,5,4,151),dtype=np.float32)
+        val_data = np.zeros((val_labels.shape[0],5,5,4,151),dtype=np.float32)
         for index,row in val_labels.iterrows():
             patient = row['id']
-            val_data[naugs*index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
-            if naugs > 1:
-                # Just repeat the sample (don't use augmented sample for validation).
-                val_data[naugs*index + 1] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+            val_data[index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
 
         np_train_labels = np.squeeze(train_labels.as_matrix(columns=['cancer']))
         np_train_labels = np.repeat(np_train_labels, naugs)
         np_val_labels = np.squeeze(val_labels.as_matrix(columns=['cancer']))
-        np_val_labels = np.repeat(np_val_labels, naugs)
 
         # Shuffle the training subset
         inds = np.arange(train_data.shape[0])
