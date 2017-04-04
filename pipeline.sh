@@ -34,4 +34,3 @@ python detect.py DSB 1 $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1/ $DATA_RO
 
 # train/validate/test on DSB
 PYTHONPATH=. python train_detect.py $DATA_ROOT/dsb/stage1/ $DATA_ROOT/dsb/processed/ $DATA_ROOT/dsb/stage1_labels.csv
-
