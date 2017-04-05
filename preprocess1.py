@@ -694,7 +694,7 @@ def generate_detect_batch(data,labels,rand,batch_size=1):
         result = ({'inputs':inputs},{'output':targets})
         yield result
 
-def load_numpy_detections(dataset='train'):
+def load_numpy_detections(dataset='train', fold=0):
     labels = pd.read_csv(LABELS_FILE)
     naugs = 1
     if dataset == 'train':
@@ -702,8 +702,10 @@ def load_numpy_detections(dataset='train'):
         labels = labels.sample(frac=1, random_state=0).reset_index(drop=True)
         split=len(labels)/10
         print 'validation size',split
-        train_labels = labels.iloc[:-split].reset_index(drop=True)
-        val_labels = labels.iloc[-split:].reset_index(drop=True)
+        start = len(labels) - split * (fold + 1)
+        end = start + split
+        train_labels = labels.iloc[pd.np.r_[:start, end:]].reset_index(drop=True)
+        val_labels = labels.iloc[start:end].reset_index(drop=True)
         # Make train and validation sets and concatenate them together so that the last 10% is for validation
         train_data = np.zeros((naugs*train_labels.shape[0],5,5,4,151),dtype=np.float32)
         for index,row in train_labels.iterrows():
