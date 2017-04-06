@@ -704,7 +704,7 @@ def load_numpy_detections(dataset='train', fold=0):
         print 'validation size',split
         start = len(labels) - split * (fold + 1)
         end = start + split
-        train_labels = labels.iloc[pd.np.r_[:start, end:]].reset_index(drop=True)
+        train_labels = labels.iloc[np.r_[0:start, end:end]].reset_index(drop=True)
         val_labels = labels.iloc[start:end].reset_index(drop=True)
         # Make train and validation sets and concatenate them together so that the last 10% is for validation
         train_data = np.zeros((naugs*train_labels.shape[0],5,5,4,151),dtype=np.float32)
@@ -714,18 +714,14 @@ def load_numpy_detections(dataset='train', fold=0):
             if naugs > 1:
                 train_data[naugs*index + 1] = np.load(DETECTIONS_DSB_AUG1_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
 
-        val_data = np.zeros((naugs*val_labels.shape[0],5,5,4,151),dtype=np.float32)
+        val_data = np.zeros((val_labels.shape[0],5,5,4,151),dtype=np.float32)
         for index,row in val_labels.iterrows():
             patient = row['id']
-            val_data[naugs*index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
-            if naugs > 1:
-                # Just repeat the sample (don't use augmented sample for validation).
-                val_data[naugs*index + 1] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
+            val_data[index] = np.load(DETECTIONS_DSB_ROOT+dataset+'/features_'+patient+'.npy').astype(np.float32)
 
         np_train_labels = np.squeeze(train_labels.as_matrix(columns=['cancer']))
         np_train_labels = np.repeat(np_train_labels, naugs)
         np_val_labels = np.squeeze(val_labels.as_matrix(columns=['cancer']))
-        np_val_labels = np.repeat(np_val_labels, naugs)
 
         # Shuffle the training subset
         inds = np.arange(train_data.shape[0])
