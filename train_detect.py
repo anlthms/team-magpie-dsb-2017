@@ -126,11 +126,15 @@ def calibrate(pred, scale=1.0):
     return pred
 
 
-print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
-if len(sys.argv) == 4:
+print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE fold' % sys.argv[0])
+if len(sys.argv) >= 4:
     pre.ORIGINAL_IMAGES_ROOT = sys.argv[1]
     pre.PROCESSED_IMAGES_ROOT = sys.argv[2]
     pre.LABELS_FILE = sys.argv[3]
+if len(sys.argv) == 5:
+    fold = int(sys.argv[4])
+else:
+    fold = 0
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth=True
@@ -148,7 +152,7 @@ TRAIN = True
 if TRAIN:
     print "loading train data..."
    
-    data_train, data_v, labels_train, labels_v = pre.load_numpy_detections()
+    data_train, data_v, labels_train, labels_v = pre.load_numpy_detections(fold=fold)
     print "loading done"
 
 
@@ -172,6 +176,11 @@ if True:
 
     val_loss = log_loss(labels_v, np.squeeze(val_predictions))
     print('val mean %.4f loss %.4f' % (val_predictions.mean(), val_loss))
+    df = pd.DataFrame({'cancer':pd.Series(np.squeeze(val_predictions))})
+    df.to_csv('val-predictions-' + str(fold) + '.csv',header=True,columns=['cancer'],index=False)
+    df = pd.DataFrame({'cancer':pd.Series(np.squeeze(labels_v))})
+    df.to_csv('val-labels-' + str(fold) + '.csv',header=True,columns=['cancer'],index=False)
+
     val_loss = log_loss(labels_v, calibrate(np.squeeze(val_predictions)))
     print('calibrated loss %.4f' % val_loss)
 

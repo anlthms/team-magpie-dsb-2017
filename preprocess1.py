@@ -700,11 +700,15 @@ def load_numpy_detections(dataset='train', fold=0):
     if dataset == 'train':
         # Shuffle the labels
         labels = labels.sample(frac=1, random_state=0).reset_index(drop=True)
-        split=len(labels)/10
+        split=len(labels) // 10
         print 'validation size',split
-        start = len(labels) - split * (fold + 1)
-        end = start + split
-        train_labels = labels.iloc[np.r_[0:start, end:end]].reset_index(drop=True)
+        if fold == 9:
+            start = 0
+            end = len(labels) - split * (8 + 1)
+        else:
+            start = len(labels) - split * (fold + 1)
+            end = start + split
+        train_labels = labels.iloc[np.r_[0:start, end:len(labels)]].reset_index(drop=True)
         val_labels = labels.iloc[start:end].reset_index(drop=True)
         # Make train and validation sets and concatenate them together so that the last 10% is for validation
         train_data = np.zeros((naugs*train_labels.shape[0],5,5,4,151),dtype=np.float32)
