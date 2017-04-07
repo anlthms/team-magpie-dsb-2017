@@ -178,15 +178,13 @@ if False:
 
     val_loss = log_loss(labels_v, np.squeeze(val_predictions))
     print('val mean %.4f loss %.4f' % (val_predictions.mean(), val_loss))
-    val_loss = log_loss(labels_v, calibrate(np.squeeze(val_predictions)))
-    print('calibrated loss %.4f' % val_loss)
 
 data_test,ids = pre.load_numpy_detections(dataset='test')
 print "predicting..."
 
 predictions = model.predict(data_test,batch_size=1,verbose=1)
 
-df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(calibrate(np.squeeze(predictions)))})
+df = pd.DataFrame({'id':pd.Series(ids),'cancer':pd.Series(np.squeeze(predictions))})
 df.to_csv('predictions.csv',header=True,columns=['id','cancer'],index=False)
 
 
