@@ -160,6 +160,11 @@ if TRAIN:
 
 # SUBMIT
 model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
+if True:
+    val_predictions = model.predict(data_v, batch_size=1)
+
+    val_loss = log_loss(labels_v, np.squeeze(val_predictions))
+    print('val mean %.4f loss %.4f' % (val_predictions.mean(), val_loss))
 
 
 data_test,ids = pre.load_numpy_detections(dataset='test')
