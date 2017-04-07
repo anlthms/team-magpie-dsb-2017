@@ -173,7 +173,7 @@ if TRAIN:
 
 # SUBMIT
 model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
-if False:
+if True:
     val_predictions = model.predict(data_v, batch_size=1)
 
     val_loss = log_loss(labels_v, np.squeeze(val_predictions))
