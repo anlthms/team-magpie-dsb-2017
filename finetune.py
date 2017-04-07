@@ -6,7 +6,7 @@ import dicom
 from sklearn.ensemble import GradientBoostingClassifier
 
 
-nfeats = 3
+nfeats = 1
 
 def log_loss(t, y):
     assert t.shape == y.shape
@@ -18,7 +18,7 @@ def get_features(df, set_name):
     cache_name = set_name + '-features.npy'
     if os.path.exists(cache_name):
         features = np.load(cache_name)
-        return features
+        return features[:, :nfeats]
 
     features = np.zeros((df.shape[0], nfeats), dtype=np.float32)
     for idx, row in df.iterrows():
@@ -40,7 +40,7 @@ def get_features(df, set_name):
 
         print uid, np.int32(np.round(features[idx]))
     np.save(cache_name, features)
-    return features
+    return features[:, :nfeats]
 
 
 data_dir = sys.argv[1]
@@ -83,7 +83,7 @@ train_data[:, 1:] = get_features(train_rows, 'train')
 val_data[:, 1:] = get_features(val_rows, 'val')
 
 rng = np.random.RandomState(0)
-model = GradientBoostingClassifier(n_estimators=40, max_depth=3,
+model = GradientBoostingClassifier(n_estimators=500, max_depth=1,
                                    random_state=rng, verbose=1)
 model.fit(train_data, train_labels.ravel())
 val_preds = model.predict_proba(val_data)[:, 1]
@@ -97,5 +97,6 @@ test_data = np.zeros((test_preds.shape[0], 1 + nfeats), dtype=np.float32)
 test_data[:, 0] = test_preds['cancer'].values.ravel()
 test_data[:, 1:] = get_features(test_preds, 'test')
 new_test_preds = model.predict_proba(test_data)[:, 1]
+ids = test_preds['id'].values.ravel()
 df = pd.DataFrame({'id': pd.Series(ids), 'cancer': pd.Series(np.squeeze(new_test_preds))})
 df.to_csv('tuned_predictions.csv', header=True, columns=['id','cancer'], index=False)
