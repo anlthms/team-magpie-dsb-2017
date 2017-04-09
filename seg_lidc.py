@@ -113,7 +113,7 @@ def main():
 
     print "loading data..."
     data,labels = preprocess.load_lidc()
-    N_VAL = 100
+    N_VAL = 10
     if os.path.exists('quick-mode'):
         quick_mode = True
         N_VAL = len(data) // 2
@@ -196,7 +196,7 @@ def main():
     for i in range(len(data_test)):
         pix_sum = np.sum(mask_test[i,...])
         detected = np.max(detect[i,...])
-        shape = data_v[i].shape
+        shape = data_test[i].shape
         print "nodule pixels:",pix_sum,detected,shape, np.max(predict[i,...])
         PLOT = False
         thresh = 0.15
