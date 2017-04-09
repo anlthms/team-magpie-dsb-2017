@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+set -x
 # The data is assumed to be inside $DATA_ROOT/lidc and $DATA_ROOT/dsb
 
 DATA_ROOT=/usr/local/data

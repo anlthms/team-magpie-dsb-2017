@@ -1,6 +1,6 @@
 import pandas as pd
 
-predictions = ['predictions1.csv','predictions2.csv']
+predictions = ['predictions.stage2.4865.csv','predictions.stage2.mse.5027.csv']
 dfs = []
 for p in predictions:
     df = pd.read_csv(p)
