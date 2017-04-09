@@ -687,7 +687,7 @@ def generate_detect_batch(data,labels,rand,batch_size=1):
 def load_numpy_detections(dataset='train'):
     labels = pd.read_csv(LABELS_FILE)
     if dataset == 'train':
-        data = np.zeros((1400,5,5,4,151),dtype=np.float32)
+        data = np.zeros((labels.shape[0],5,5,4,151),dtype=np.float32)
         
         for index,row in tqdm(labels.iterrows()):
             patient = row['id']

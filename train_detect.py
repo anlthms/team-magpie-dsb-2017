@@ -111,6 +111,10 @@ def get_model4():
     model.summary()
     return model
 
+def log_loss(t, y):
+    eps = 1e-15
+    y = np.clip(y, eps, 1-eps)
+    return -np.mean(t*np.log(y) + (1 - t)*np.log(1 - y))
 
 print('Usage: %s ORIGINAL_IMAGES_ROOT/ PROCESSED_IMAGES_ROOT/ LABELS_FILE' % sys.argv[0])
 if len(sys.argv) == 4:
@@ -160,6 +164,11 @@ if TRAIN:
 
 # SUBMIT
 model.load_weights(BEST_WEIGHTS_PATH,by_name=True)
+if True:
+    val_predictions = model.predict(data_v, batch_size=1)
+
+    val_loss = log_loss(labels_v, np.squeeze(val_predictions))
+    print('val mean %.4f loss %.4f' % (val_predictions.mean(), val_loss))
 
 
 data_test,ids = pre.load_numpy_detections(dataset='test')
