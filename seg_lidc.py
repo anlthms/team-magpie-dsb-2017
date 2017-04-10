@@ -113,7 +113,7 @@ def main():
 
     print "loading data..."
     data,labels = preprocess.load_lidc()
-    N_VAL = 10
+    N_VAL = 100
     if os.path.exists('quick-mode'):
         quick_mode = True
         N_VAL = len(data) // 2
